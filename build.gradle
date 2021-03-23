@@ -14,5 +14,20 @@ dependencies {
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.0.1'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2'
 
+    //neo4j
+    compile 'org.neo4j:neo4j-ogm-core:3.2.20'
+    compile 'org.neo4j:neo4j-ogm-http-driver:3.2.20'
+    compile 'org.neo4j:neo4j-ogm-bolt-driver:3.2.20'
+    compile 'org.neo4j:neo4j-ogm-embedded-driver:3.2.20'
+    compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.30'
+    compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.30'
+    implementation "com.fasterxml.jackson.module:jackson-module-kotlin:2.12.+"
 
+
+
+}
+compileKotlin {
+    kotlinOptions {
+        languageVersion = "1.4"
+    }
 }
