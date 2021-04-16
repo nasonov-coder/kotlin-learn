@@ -2,6 +2,7 @@ package dev.gaodi.fileserver.tests
 
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonFormat.Shape
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonPropertyOrder
 import com.fasterxml.jackson.databind.JsonNode
 import dev.gaodi.fileserver.Noder
@@ -25,7 +26,6 @@ internal class Foo {
     @JsonFormat(shape = Shape.STRING)
     var bString: String? = null
     var content: FooContent? = null
-
     @JsonFormat(shape = Shape.NUMBER)
     var cInt: Int? = null
     override fun toString(): String {
