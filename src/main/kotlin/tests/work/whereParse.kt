@@ -3,11 +3,11 @@ package dev.gaodi.fileserver.tests.work
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.*
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import tests.sout
+import org.intellij.lang.annotations.Language
 
 val mapper =  jacksonObjectMapper()
 fun main() {
-    val str = """
+    @Language("JSON") val str = """
     {
         "and": [
           {
@@ -23,54 +23,54 @@ fun main() {
             ]
           },
           {
-        "and": [
-          {
-            ">": [
-              123456,
-              {"field": "path.to.field"}
+            "and": [
+              {
+                ">": [
+                  123456,
+                  {"field": "path.to.field"}
+                ]
+              },
+              {
+                "not_in": [
+                  {"field": "path.to.field"},
+                  ["d"]
+                ]
+              }
             ]
-          },
-          {
-            "not_in": [
-              {"field": "path.to.field"},
-              ["A", "B", "C"]
-            ]
-          }
-        ]
-    }
+          } 
         ]
     }
     """
-   WhereParser(mapper.readTree(str)).sout()
+   println(Where(mapper.readTree(str)))
 
 }
 
 
 
-sealed class WhereNode(val value: String) {
-    abstract class Operation {
-        class Logical(operator: String, operands: List<WhereNode>): WhereNode(
+sealed class WhereNode(private val str: String) {
+    sealed class Operation(str: String): WhereNode(str) {
+        class Logical(operator: String, operands: List<WhereNode>): Operation(
             "(${operands.joinToString(" $operator ")})"
         )
-        class Math(operator: String, operands: List<WhereNode>): WhereNode(
+        class Math(operator: String, operands: List<WhereNode>): Operation(
             "(${operands[0]} $operator ${operands[1]})"
         )
-        class Inclusion(operator: String, operands: List<WhereNode>): WhereNode(
+        class Inclusion(operator: String, operands: List<WhereNode>): Operation(
             "(${operands[0]} $operator ${operands[1]})"
         )
     }
-    abstract class Value {
-        class Numb(numb: String): WhereNode(numb)
-        class Str(escapedValue: String): WhereNode(escapedValue)
-        class Array(map: List<WhereNode>) : WhereNode("[${map.joinToString(",")}]")
-        class Null: WhereNode("null")
-        class Bool(bool: Boolean): WhereNode(bool.toString())
+    sealed class Value(str: String): WhereNode(str) {
+        class Numb(numb: String): Value(numb)
+        class Str(escapedValue: String): Value(escapedValue)
+        class Array(map: List<WhereNode>) : Value("[${map.joinToString(",")}]")
+        class Null: Value("null")
+        class Bool(bool: Boolean): Value(bool.toString())
     }
 
     class Field(escapedPath: String): WhereNode(escapedPath)
 
     override fun toString(): String {
-        return value
+        return str
     }
 }
 
@@ -91,55 +91,61 @@ enum class Operator(vararg list: String){
     }
 
 }
-class WhereParser(json: JsonNode) {
+class Where(json: JsonNode) {
     val params = mapper.createObjectNode()
-    val query = parse(json, "root")
+    val query = Parser("root").parse(json)
     private var counter = 1
-    private fun parse(node: JsonNode, path: String): WhereNode {
-        val errPath = {msg: String, p: String -> throw WhereException("$msg at $p")}
-        val err = {msg: String -> errPath(msg, path)}
-        return when(node) {
-            is ArrayNode ->
-                WhereNode.Value.Array(node.mapIndexed{k, v -> parse(v, "$path[$k]") })
-            is TextNode ->
-                WhereNode.Value.Str(escapeString(node.asText()))
-            is NumericNode ->
-                WhereNode.Value.Numb(node.asText())
-            is BooleanNode ->
-                WhereNode.Value.Bool(node.booleanValue())
-            is NullNode ->
-                WhereNode.Value.Null()
-            is ObjectNode -> {
-                val fields = node.toList()
-                if(fields.size != 1)
-                    err("size != 1, size = ${fields.size}")
-                val (key, value) = fields[0]
-                if(key == "field")
-                    WhereNode.Field(escapePath(value.asText()))
-                else if( key == "value")
-                    TODO()
-                else {
-                    val rawOperands = value as? ArrayNode
-                        ?: err("operands must be array, key - $key")
-                    val (operatorType, operator) = Operator.find(key)
-                        ?: err("unknown operator $key")
-                    val operands = rawOperands.map { parse(it, "$path.$key") }
-                    try {
-                        checkOperands(operatorType, operands)
-                    } catch (e: Throwable) {
-                        errPath(e.message ?: "", "$path.$key")
-                    }
 
-                    when(operatorType) {
-                        Operator.Math -> WhereNode.Operation.Math(operator, operands)
-                        Operator.Inclusion -> WhereNode.Operation.Inclusion(operator, operands)
-                        Operator.Logical -> WhereNode.Operation.Logical(operator, operands)
+    inner class Parser(val path: String) {
+        fun parse(node: JsonNode): WhereNode {
+            return when(node) {
+                is ArrayNode ->
+                    WhereNode.Value.Array(node.mapIndexed{k, v -> Parser("$path[$k]").parse(v) })
+                is TextNode ->
+                    WhereNode.Value.Str(escapeString(node.asText()))
+                is NumericNode ->
+                    WhereNode.Value.Numb(node.asText())
+                is BooleanNode ->
+                    WhereNode.Value.Bool(node.booleanValue())
+                is NullNode ->
+                    WhereNode.Value.Null()
+                is ObjectNode -> {
+                    val fields = node.toList()
+                    if(fields.size != 1)
+                        error("size != 1, size = ${fields.size}")
+                    val (key, value) = fields[0]
+                    if(key == "field")
+                        WhereNode.Field(escapePath(value.asText()))
+                    else if( key == "value")
+                        TODO()
+                    else {
+                        val rawOperands = value as? ArrayNode
+                            ?: error("operands must be array, key - $key")
+                        val (operatorType, operator) = Operator.find(key)
+                            ?: error("unknown operator $key")
+                        val operands = rawOperands.map { Parser("$path.$key").parse(it) }
+                        try {
+                            checkOperands(operatorType, operands)
+                        } catch (e: Throwable) {
+                            error(e.message ?: "", ".$key")
+                        }
+
+                        when(operatorType) {
+                            Operator.Math -> WhereNode.Operation.Math(operator, operands)
+                            Operator.Inclusion -> WhereNode.Operation.Inclusion(operator, operands)
+                            Operator.Logical -> WhereNode.Operation.Logical(operator, operands)
+                        }
                     }
                 }
+                else -> error("unknown node type")
             }
-            else -> err("unknown node type")
+        }
+        @WhereError
+        fun error(msg: String, additionalPath: String = ""): Nothing {
+            throw WhereException("$msg at $path$additionalPath")
         }
     }
+
     private fun checkOperands(operator: Operator, operands: List<WhereNode>) {
         when(operator) {
             Operator.Math -> {
@@ -187,6 +193,7 @@ fun ObjectNode.toList(): List<Pair<String, JsonNode>> {
     return this.fields().asSequence().map{ it.key!! to it.value }.toList()
 }
 
-
+@DslMarker
+annotation class WhereError
 
 class WhereException(msg: String): IllegalStateException(msg)

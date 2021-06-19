@@ -4,27 +4,27 @@ package H.MoreLanguageConstructs
 fun main() {
     println(`scope let`())
     println(`scope run`())
-    KClass().also(::println).apply(::println).toKek()
-    KClass().apply {
+    KKClass().also(::println).apply(::println).toKek()
+    KKClass().apply {
         testFunRef()
         testMyLet()
     }
 
 }
 fun `scope let`(): Int {
-    return KClass().let {
+    return KKClass().let {
         it.toKek()
         return@let it.int
     }
 }
-fun `scope also`(): KClass {
-    return KClass().also {
+fun `scope also`(): KKClass {
+    return KKClass().also {
         it.toKek()
         it.int
     }
 }
 fun `scope run`():Int {
-    return KClass().run {
+    return KKClass().run {
         // wont work:
         // println(it)
         // it is not defined
@@ -32,8 +32,8 @@ fun `scope run`():Int {
         int
     }
 }
-fun `scope apply`(): KClass {
-    return KClass().apply {
+fun `scope apply`(): KKClass {
+    return KKClass().apply {
         // wont work:
         // println(it)
         // it is not defined
@@ -42,7 +42,7 @@ fun `scope apply`(): KClass {
     }
 }
 fun `scope with`():Int {
-    return with(KClass()) {
+    return with(KKClass()) {
         // wont work:
         // println(it)
         // it is not defined
@@ -54,13 +54,13 @@ fun `scope with`():Int {
 // todo takeIf and takeUnless
 
 
-class KClass(
+class KKClass(
     val int: Int = 1
 ) {
     fun toKek() {
 
     }
-    fun toLol(k: KClass) {
+    fun toLol(k: KKClass) {
         println(k)
     }
     fun testFunRef() {
@@ -68,7 +68,7 @@ class KClass(
         let(this::toLol)
         let(::toLol)
     }
-    fun myLet(block: (KClass) -> Unit):Unit {
+    fun myLet(block: (KKClass) -> Unit):Unit {
         block.invoke(this)
     }
     fun testMyLet() {

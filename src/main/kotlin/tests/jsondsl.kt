@@ -90,9 +90,9 @@ class JsonObjectBuilder private constructor() {
     }
 }
 @JsonMarkerColor
-fun obj(func: JsonObjectBuilder.()->Unit): JsonNode = JsonObjectBuilder.create(func)
+fun obj(func: JsonObjectBuilder.()->Unit): ObjectNode = JsonObjectBuilder.create(func)
 @JsonMarkerColor
-fun o(func: JsonObjectBuilder.()->Unit): JsonNode = JsonObjectBuilder.create(func)
+fun o(func: JsonObjectBuilder.()->Unit): ObjectNode = JsonObjectBuilder.create(func)
 
 @JsonMarkerColor
 object ar {
