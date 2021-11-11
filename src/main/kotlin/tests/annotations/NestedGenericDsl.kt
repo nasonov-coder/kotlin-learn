@@ -1,7 +1,7 @@
 package dev.gaodi.fileserver.tests.annotations
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import sun.invoke.empty.Empty
+import dev.gaodi.fileserver.dev.equal.service.Empty
 import kotlin.reflect.KClass
 
 

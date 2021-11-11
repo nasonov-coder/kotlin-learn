@@ -9,6 +9,7 @@ object Resp {
         override val notFoundDesc = Desc("")
     }
 }
+
 @Descc("lol")
 interface NotFoundEmpty: NotFound<Empty>
 
@@ -27,11 +28,12 @@ fun main() {
     Resp.resp.notFoundDesc.sout()
     val r = Resp.resp
     val sup = r::class.supertypes.first()
+
     println(sup.findAnnotation<Descc>())
 }
 
 data class Desc(
     @Descc("asd") val desc: String
 )
-
+@Target(AnnotationTarget.CLASS, AnnotationTarget.PROPERTY, AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.TYPE)
 annotation class Descc(val desc: String)

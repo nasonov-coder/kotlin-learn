@@ -1,0 +1,7 @@
+// AQL query:
+FOR M IN keks
+    LET doc = M.kek
+    let kek = CONCAT("asd", "asd", doc)
+    RETURN kek
+//openSesame
+

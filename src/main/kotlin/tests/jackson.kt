@@ -43,6 +43,22 @@ fun <T> T.sout(msg: String): T {
     println("$msg: $this")
     return this
 }
+fun <T: Any?> T.pln(msg: String? = null): T {
+    val st = Thread.currentThread().stackTrace
+    val value: Any? = if(this is Iterable<*>) {
+        this.joinToString()
+
+    } else if (this is java.lang.Iterable<*>) {
+        this.iterator().asSequence().joinToString()
+    } else if (this is kotlin.ByteArray) {
+        this.joinToString()
+    } else {
+        this
+    }
+    val msgg = (msg?:"").padEnd(12)
+    println("$msgg – `$value` : ${this!!::class.qualifiedName} || ${st[st.size - 2]}")
+    return this
+}
 open class Gen: Noder() {
     val keks: String = "asdasda"
 }
